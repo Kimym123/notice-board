@@ -23,7 +23,7 @@ const SignUp = () => {
         })
         .then((response) => {
           console.log("res", response.data.email);
-          router.push("/login");
+          // router.push("/login");
         })
         .catch((error) => {
           // setErrors(error.response?.data?.statusCode === 401);

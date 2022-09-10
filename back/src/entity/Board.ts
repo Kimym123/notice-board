@@ -1,7 +1,13 @@
-import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import BaseEntity from './Entity';
 import User from './User';
-import { JoinColumn } from 'typeorm/browser';
 import Post from './Post';
 
 @Entity('Board')

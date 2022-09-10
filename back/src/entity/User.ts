@@ -15,7 +15,7 @@ export default class User extends BaseEntity {
 
   @Index()
   @Length(2, 255, { message: '사용자 이름은 2자 이상이어야 합니다..' })
-  @Column()
+  @Column({ unique: true })
   username: string;
 
   @Column()

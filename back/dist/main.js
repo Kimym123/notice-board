@@ -198,6 +198,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
 const common_1 = __webpack_require__(6);
@@ -207,6 +210,11 @@ const logger_middleware_1 = __webpack_require__(9);
 const config_1 = __webpack_require__(10);
 const typeorm_1 = __webpack_require__(11);
 const users_module_1 = __webpack_require__(12);
+const Board_1 = __importDefault(__webpack_require__(20));
+const Comment_1 = __importDefault(__webpack_require__(22));
+const Post_1 = __importDefault(__webpack_require__(19));
+const User_1 = __importDefault(__webpack_require__(14));
+const Vote_1 = __importDefault(__webpack_require__(23));
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logger_middleware_1.LoggerMiddleware).forRoutes('*');
@@ -225,7 +233,7 @@ AppModule = __decorate([
                     username: configService.get('DB_BACK_USER_ID'),
                     password: configService.get('DB_BACK_USER_PASSWORD'),
                     database: configService.get('DB_NAME'),
-                    entities: ['src/entity/**/*.js'],
+                    entities: [Board_1.default, Comment_1.default, Post_1.default, User_1.default, Vote_1.default],
                     synchronize: true,
                     logging: false,
                     migrations: [],
@@ -378,15 +386,21 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UsersModule = void 0;
 const common_1 = __webpack_require__(6);
 const users_service_1 = __webpack_require__(13);
-const users_controller_1 = __webpack_require__(14);
+const users_controller_1 = __webpack_require__(24);
+const typeorm_1 = __webpack_require__(11);
+const User_1 = __importDefault(__webpack_require__(14));
 let UsersModule = class UsersModule {
 };
 UsersModule = __decorate([
     (0, common_1.Module)({
+        imports: [typeorm_1.TypeOrmModule.forFeature([User_1.default])],
         controllers: [users_controller_1.UsersController],
         providers: [users_service_1.UsersService],
         exports: [users_service_1.UsersService],
@@ -407,22 +421,461 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UsersService = void 0;
 const common_1 = __webpack_require__(6);
+const User_1 = __importDefault(__webpack_require__(14));
+const typeorm_1 = __webpack_require__(11);
+const typeorm_2 = __webpack_require__(15);
+const bcryptjs_1 = __importDefault(__webpack_require__(18));
 let UsersService = class UsersService {
-    async register(email) {
-        return console.log('email', email);
+    constructor(userRepository) {
+        this.userRepository = userRepository;
+    }
+    async register(email, username, password) {
+        const emailUser = await User_1.default.findOneBy({ email });
+        const usernameUser = await User_1.default.findOneBy({ username });
+        if (emailUser) {
+            throw new common_1.UnauthorizedException('이미 해당 이메일 주소가 사용되었습니다..');
+        }
+        if (usernameUser) {
+            throw new common_1.UnauthorizedException('이미 해당 사용자 이름이 사용되었습니다..');
+        }
+        const hashedPassword = await bcryptjs_1.default.hash(password, 12);
+        const user = new User_1.default();
+        user.email = email;
+        user.username = username;
+        user.password = hashedPassword;
+        await user.save();
+        console.log('BackService', user);
+        return user;
     }
 };
 UsersService = __decorate([
-    (0, common_1.Injectable)()
+    (0, common_1.Injectable)(),
+    __param(0, (0, typeorm_1.InjectRepository)(User_1.default)),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object])
 ], UsersService);
 exports.UsersService = UsersService;
 
 
 /***/ }),
 /* 14 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const typeorm_1 = __webpack_require__(15);
+const Entity_1 = __importDefault(__webpack_require__(16));
+const class_validator_1 = __webpack_require__(17);
+const bcryptjs_1 = __importDefault(__webpack_require__(18));
+const Post_1 = __importDefault(__webpack_require__(19));
+const Vote_1 = __importDefault(__webpack_require__(23));
+let User = class User extends Entity_1.default {
+    async hashPassword() {
+        this.password = await bcryptjs_1.default.hash(this.password, 6);
+    }
+};
+__decorate([
+    (0, typeorm_1.Index)(),
+    (0, class_validator_1.IsEmail)(undefined, { message: '이메일 주소가 잘못되었습니다.' }),
+    (0, class_validator_1.Length)(1, 255, { message: '이메일 주소는 비워둘 수 없습니다.' }),
+    (0, typeorm_1.Column)({ unique: true }),
+    __metadata("design:type", String)
+], User.prototype, "email", void 0);
+__decorate([
+    (0, typeorm_1.Index)(),
+    (0, class_validator_1.Length)(2, 255, { message: '사용자 이름은 2자 이상이어야 합니다..' }),
+    (0, typeorm_1.Column)({ unique: true }),
+    __metadata("design:type", String)
+], User.prototype, "username", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    (0, class_validator_1.Length)(6, 255, { message: '비밀번호는 6자리 이상 작성해주세요. ' }),
+    __metadata("design:type", String)
+], User.prototype, "password", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => Post_1.default, (post) => post.user),
+    __metadata("design:type", Array)
+], User.prototype, "posts", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => Vote_1.default, (vote) => vote.user),
+    __metadata("design:type", Array)
+], User.prototype, "votes", void 0);
+__decorate([
+    (0, typeorm_1.BeforeInsert)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], User.prototype, "hashPassword", null);
+User = __decorate([
+    (0, typeorm_1.Entity)('users')
+], User);
+exports["default"] = User;
+
+
+/***/ }),
+/* 15 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("typeorm");
+
+/***/ }),
+/* 16 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const typeorm_1 = __webpack_require__(15);
+class Entity extends typeorm_1.BaseEntity {
+}
+__decorate([
+    (0, typeorm_1.PrimaryGeneratedColumn)(),
+    __metadata("design:type", Number)
+], Entity.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
+    __metadata("design:type", typeof (_a = typeof Date !== "undefined" && Date) === "function" ? _a : Object)
+], Entity.prototype, "createdAt", void 0);
+__decorate([
+    (0, typeorm_1.UpdateDateColumn)(),
+    __metadata("design:type", typeof (_b = typeof Date !== "undefined" && Date) === "function" ? _b : Object)
+], Entity.prototype, "updatedAt", void 0);
+exports["default"] = Entity;
+
+
+/***/ }),
+/* 17 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("class-validator");
+
+/***/ }),
+/* 18 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("bcryptjs");
+
+/***/ }),
+/* 19 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const typeorm_1 = __webpack_require__(15);
+const Entity_1 = __importDefault(__webpack_require__(16));
+const User_1 = __importDefault(__webpack_require__(14));
+const Board_1 = __importDefault(__webpack_require__(20));
+const class_transformer_1 = __webpack_require__(21);
+const Comment_1 = __importDefault(__webpack_require__(22));
+const Vote_1 = __importDefault(__webpack_require__(23));
+let Post = class Post extends Entity_1.default {
+};
+__decorate([
+    (0, typeorm_1.Index)(),
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Post.prototype, "identifier", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Post.prototype, "title", void 0);
+__decorate([
+    (0, typeorm_1.Index)(),
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Post.prototype, "slug", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true, type: 'text' }),
+    __metadata("design:type", String)
+], Post.prototype, "body", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Post.prototype, "subName", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Post.prototype, "username", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => User_1.default, (user) => user.posts),
+    (0, typeorm_1.JoinColumn)({ name: 'username', referencedColumnName: 'username' }),
+    __metadata("design:type", typeof (_a = typeof User_1.default !== "undefined" && User_1.default) === "function" ? _a : Object)
+], Post.prototype, "user", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => Board_1.default, (board) => board.posts),
+    (0, typeorm_1.JoinColumn)({ name: 'boardName', referencedColumnName: 'name' }),
+    __metadata("design:type", typeof (_b = typeof Board_1.default !== "undefined" && Board_1.default) === "function" ? _b : Object)
+], Post.prototype, "board", void 0);
+__decorate([
+    (0, class_transformer_1.Exclude)(),
+    (0, typeorm_1.OneToMany)(() => Comment_1.default, (comment) => comment.post),
+    __metadata("design:type", Array)
+], Post.prototype, "comments", void 0);
+__decorate([
+    (0, class_transformer_1.Exclude)(),
+    (0, typeorm_1.OneToMany)(() => Vote_1.default, (vote) => vote.post),
+    __metadata("design:type", Array)
+], Post.prototype, "votes", void 0);
+Post = __decorate([
+    (0, typeorm_1.Entity)('posts')
+], Post);
+exports["default"] = Post;
+
+
+/***/ }),
+/* 20 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const typeorm_1 = __webpack_require__(15);
+const Entity_1 = __importDefault(__webpack_require__(16));
+const User_1 = __importDefault(__webpack_require__(14));
+const Post_1 = __importDefault(__webpack_require__(19));
+let Board = class Board extends Entity_1.default {
+};
+__decorate([
+    (0, typeorm_1.Index)(),
+    (0, typeorm_1.Column)({ unique: true }),
+    __metadata("design:type", String)
+], Board.prototype, "name", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Board.prototype, "title", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
+    __metadata("design:type", String)
+], Board.prototype, "description", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Board.prototype, "imageUrn", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Board.prototype, "bannerUrn", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Board.prototype, "username", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => User_1.default),
+    (0, typeorm_1.JoinColumn)({ name: 'username', referencedColumnName: 'username' }),
+    __metadata("design:type", typeof (_a = typeof User_1.default !== "undefined" && User_1.default) === "function" ? _a : Object)
+], Board.prototype, "user", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => Post_1.default, (post) => post.board),
+    __metadata("design:type", Array)
+], Board.prototype, "posts", void 0);
+Board = __decorate([
+    (0, typeorm_1.Entity)('Board')
+], Board);
+exports["default"] = Board;
+
+
+/***/ }),
+/* 21 */
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("class-transformer");
+
+/***/ }),
+/* 22 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const typeorm_1 = __webpack_require__(15);
+const Entity_1 = __importDefault(__webpack_require__(16));
+const User_1 = __importDefault(__webpack_require__(14));
+const Post_1 = __importDefault(__webpack_require__(19));
+const class_transformer_1 = __webpack_require__(21);
+const Vote_1 = __importDefault(__webpack_require__(23));
+let Comment = class Comment extends Entity_1.default {
+};
+__decorate([
+    (0, typeorm_1.Index)(),
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Comment.prototype, "identifier", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Comment.prototype, "body", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Comment.prototype, "username", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", Number)
+], Comment.prototype, "postId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => User_1.default),
+    (0, typeorm_1.JoinColumn)({ name: 'username', referencedColumnName: 'username' }),
+    __metadata("design:type", typeof (_a = typeof User_1.default !== "undefined" && User_1.default) === "function" ? _a : Object)
+], Comment.prototype, "user", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => Post_1.default, (post) => post.comments, { nullable: false }),
+    __metadata("design:type", typeof (_b = typeof Post_1.default !== "undefined" && Post_1.default) === "function" ? _b : Object)
+], Comment.prototype, "post", void 0);
+__decorate([
+    (0, class_transformer_1.Exclude)(),
+    (0, typeorm_1.OneToMany)(() => Vote_1.default, (vote) => vote.comment),
+    __metadata("design:type", Array)
+], Comment.prototype, "votes", void 0);
+Comment = __decorate([
+    (0, typeorm_1.Entity)('comments')
+], Comment);
+exports["default"] = Comment;
+
+
+/***/ }),
+/* 23 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+"use strict";
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+var _a, _b, _c;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const typeorm_1 = __webpack_require__(15);
+const Entity_1 = __importDefault(__webpack_require__(16));
+const User_1 = __importDefault(__webpack_require__(14));
+const Post_1 = __importDefault(__webpack_require__(19));
+const Comment_1 = __importDefault(__webpack_require__(22));
+let Vote = class Vote extends Entity_1.default {
+};
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", Number)
+], Vote.prototype, "value", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], Vote.prototype, "username", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Number)
+], Vote.prototype, "postId", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", Number)
+], Vote.prototype, "commentId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => User_1.default),
+    (0, typeorm_1.JoinColumn)({ name: 'username', referencedColumnName: 'username' }),
+    __metadata("design:type", typeof (_a = typeof User_1.default !== "undefined" && User_1.default) === "function" ? _a : Object)
+], Vote.prototype, "user", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => Post_1.default),
+    __metadata("design:type", typeof (_b = typeof Post_1.default !== "undefined" && Post_1.default) === "function" ? _b : Object)
+], Vote.prototype, "post", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => Comment_1.default),
+    __metadata("design:type", typeof (_c = typeof Comment_1.default !== "undefined" && Comment_1.default) === "function" ? _c : Object)
+], Vote.prototype, "comment", void 0);
+Vote = __decorate([
+    (0, typeorm_1.Entity)('votes')
+], Vote);
+exports["default"] = Vote;
+
+
+/***/ }),
+/* 24 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -444,13 +897,19 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UsersController = void 0;
 const common_1 = __webpack_require__(6);
 const users_service_1 = __webpack_require__(13);
-const register_request_dto_1 = __webpack_require__(15);
+const register_request_dto_1 = __webpack_require__(25);
 let UsersController = class UsersController {
-    constructor(usersService) {
-        this.usersService = usersService;
+    constructor(userService) {
+        this.userService = userService;
     }
     async register(body) {
-        const result = await this.usersService.register(body.email);
+        const result = this.userService.register(body.email, body.username, body.password);
+        if (result) {
+            return result;
+        }
+        else {
+            throw new common_1.ForbiddenException();
+        }
     }
 };
 __decorate([
@@ -468,7 +927,7 @@ exports.UsersController = UsersController;
 
 
 /***/ }),
-/* 15 */
+/* 25 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -484,7 +943,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.RegisterRequestDto = void 0;
-const class_validator_1 = __webpack_require__(16);
+const class_validator_1 = __webpack_require__(17);
 class RegisterRequestDto {
 }
 __decorate([
@@ -504,13 +963,6 @@ __decorate([
 ], RegisterRequestDto.prototype, "password", void 0);
 exports.RegisterRequestDto = RegisterRequestDto;
 
-
-/***/ }),
-/* 16 */
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("class-validator");
 
 /***/ })
 /******/ 	]);
@@ -574,7 +1026,7 @@ module.exports = require("class-validator");
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	(() => {
-/******/ 		__webpack_require__.h = () => ("68d825b98e818d7302fb")
+/******/ 		__webpack_require__.h = () => ("a3e77abde49ddead9fde")
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
